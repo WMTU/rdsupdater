@@ -11,10 +11,10 @@ def updateRDS():
   )
 
   # Get data from json stream
-  json = json.loads(urllib.urlopen("http://wmtu.mtu.edu/php/songfeed.php").read())
-  if json:
+  json_data = json.loads(urllib.urlopen("http://wmtu.mtu.edu/php/songfeed.php").read())
+  if json_data:
     
-    sendMe = "%s - %s" % (json[0]["song_name"], json[0]["artist"])
+    sendMe = "%s - %s" % (json_data[0]["song_name"], json_data[0]["artist"])
 
     # Send the string to RDS injector
     rdsport.open()
