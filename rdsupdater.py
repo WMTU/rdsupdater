@@ -17,7 +17,6 @@ def updateRDS():
     sendMe = "%s - %s" % (json_data[0]["song_name"], json_data[0]["artist"])
 
     # Send the string to RDS injector
-    rdsport.open()
     if rdsport.isOpen():
       rdsport.write("TEXT=On Now: %s\n\r" % sendMe )
     rdsport.close()
