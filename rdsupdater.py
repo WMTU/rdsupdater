@@ -14,11 +14,11 @@ def updateRDS():
   json_data = json.loads(urllib.urlopen("http://wmtu.mtu.edu/php/songfeed.php").read())
   if json_data:
     
-    sendMe = "%s - %s" % (json_data[0]["song_name"], json_data[0]["artist"])
+    sendMe = "%s by %s" % (json_data[0]["song_name"], json_data[0]["artist"])
 
     # Send the string to RDS injector
     if rdsport.isOpen():
-      rdsport.write("TEXT=On Now: %s\n\r" % sendMe )
+      rdsport.write("TEXT=%s\n\r" % sendMe )
     rdsport.close()
 
 if __name__ == "__main__":
