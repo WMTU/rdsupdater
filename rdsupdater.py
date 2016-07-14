@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-import serial, urllib, re
-import json
+import serial, time, json, requests
 
 def updateRDS():
   rdsport = serial.Serial(
@@ -11,10 +10,11 @@ def updateRDS():
   )
 
   # Get data from json stream
-  json_data = json.loads(urllib.urlopen("http://wmtu.mtu.edu/php/songfeed.php").read())
-  if json_data:
+  request_params = {"n": 1, "desc": True, "delay": True}
+  json_data = requests.get('http://10.0.1.10/log/api/v1.0/songs', params = request_params).json()
+  if json_data["songs"][0]:
     
-    sendMe = "%s by %s" % (json_data[0]["song_name"], json_data[0]["artist"])
+    sendMe = "%s by %s" % (json_data["songs"][0]["title"], json_data["songs"][0]["artist"])
 
     # Send the string to RDS injector
     if rdsport.isOpen():
