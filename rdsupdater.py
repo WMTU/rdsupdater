@@ -1,25 +1,32 @@
 #!/usr/bin/env python
 
-import serial, time, json, requests
+# import several useful libraries
+import serial, time, json, requests, ssl
 
+# location for the json song log data
+song_url = 'https://wmtu.fm/log/api/v1.0/songs'
+
+# method for updating RDS data
 def updateRDS():
-  rdsport = serial.Serial(
-    port='/dev/ttyS0',
-    baudrate=9600,
-    timeout=30,
-  )
+  # opens a new serial communication port
+  # baud rate of 9600, timeout of 30 seconds
+  rdsconn = serial.Serial('/dev/ttyS0', 9600, timeout=30)
 
-  # Get data from json stream
-  request_params = {"n": 1, "desc": True, "delay": True}
-  json_data = requests.get('http://10.0.1.10/log/api/v1.0/songs', params = request_params).json()
+  # pull the current playing song data from the json song log
+  request_params = { "n": 1, "desc": True, "delay": True }
+  json_data = requests.get( song_url, params = request_params ).json()
+
+  # parse out the actual song now playing text, format it for RDS input
   if json_data["songs"][0]:
-    
-    sendMe = "%s by %s" % (json_data["songs"][0]["title"], json_data["songs"][0]["artist"])
+    np = "%s by %s" % ( json_data["songs"][0]["title"], json_data["songs"][0]["artist"] )
+    rdstext = "TEXT=%s\n\r" % np
 
-    # Send the string to RDS injector
-    if rdsport.isOpen():
-      rdsport.write("TEXT=%s\n\r" % sendMe )
-    rdsport.close()
+    # send the string to RDS injector
+    # note: strings must be byte endoded, so use encode() when sending
+    if rdsconn.isOpen():
+      rdsconn.write( rdstext.encode() )
+    rdsconn.close()
 
+# main function, just calls the rds updater method
 if __name__ == "__main__":
   updateRDS()
