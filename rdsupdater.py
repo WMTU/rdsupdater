@@ -1,10 +1,9 @@
 # import system libraries
 import os, json, sys, getopt, configparser, ast
 import urllib, urllib.parse, urllib.request
-from datetime import datetime, date, time, timedelta
 from time import sleep
 
-# import serial to send data to rds unites
+# import serial to send data to rds units
 import serial
 
 class RDSUpdater:
