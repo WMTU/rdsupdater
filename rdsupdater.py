@@ -1,32 +1,126 @@
-#!/usr/bin/env python
+# import system libraries
+import os, json, sys, getopt, configparser, ast
+import urllib, urllib.parse, urllib.request
+from datetime import datetime, date, time, timedelta
+from time import sleep
 
-# import several useful libraries
-import serial, time, json, requests, ssl
+# import serial to send data to rds unites
+import serial
 
-# location for the json song log data
-song_url = 'https://wmtu.fm/log/api/v1.0/songs'
+class RDSUpdater:
+    def __init__(self, config):
+        # configuration
+        self.interval   = int(config['GENERAL']['update_interval'])
+        self.device     = config['GENERAL']['serial_device']
+        self.log_url    = config['GENERAL']['log_url']
+        self.log_args   = ast.literal_eval(config['GENERAL']['log_args'])
 
-# method for updating RDS data
-def updateRDS():
-  # opens a new serial communication port
-  # baud rate of 9600, timeout of 30 seconds
-  rdsconn = serial.Serial('/dev/ttyS0', 9600, timeout=30)
+        # write out a pid file
+        # note that this will overwrite an existing pid file
+        try:
+            pid_file = open(self.pid_path, 'w')
+            pid_file.write(str(os.getpid()) + "\n")
+            pid_file.close()
+        
+        except (Exception, IOError) as e:
+            print("IO Error => ", e)
 
-  # pull the current playing song data from the json song log
-  request_params = { "n": 1, "desc": True, "delay": True }
-  json_data = requests.get( song_url, params = request_params ).json()
+    # function to fetch the current song data
+    def _fetchSong(self):
+        # do the request for song data
+        try:
+            url = self.log_url + '?' + urllib.parse.urlencode(self.log_args)
+            request = urllib.request.Request(url, headers={'User-Agent': 'RDS-Updater'})
+            data = urllib.request.urlopen(request).read()
+            data = json.loads(data)
+            
+        except (Exception, urllib.error.HTTPError) as e:
+            print("HTTP Error => ", e)
+        except (Exception, urllib.error.URLError) as e:
+            print("URL Error => ", e)
 
-  # parse out the actual song now playing text, format it for RDS input
-  if json_data["songs"][0]:
-    np = "%s by %s" % ( json_data["songs"][0]["title"], json_data["songs"][0]["artist"] )
-    rdstext = "TEXT=%s\n\r" % np
+        # set current song
+        c_title     = data['songs'][0]['title']
+        c_artist    = data['songs'][0]['artist']
+        c_album     = data['songs'][0]['album']
 
-    # send the string to RDS injector
-    # note: strings must be byte endoded, so use encode() when sending
-    if rdsconn.isOpen():
-      rdsconn.write( rdstext.encode() )
-    rdsconn.close()
+        return { 'title': c_title, 'artist': c_artist, 'album': c_album }
+
+    # function to push an update to the RDS units
+    def _update(self, title, artist):
+        rdstext = "TEXT={} by {}\n\r".format(title, artist)
+
+        # opens a new serial communication port
+        # baud rate of 9600, timeout of 30 seconds
+        rdsconn = serial.Serial(self.device, 9600, timeout=30)
+
+        # send the string to RDS injector
+        # note: strings must be byte endoded, so use encode() when sending
+        if rdsconn.isOpen():
+            rdsconn.write(rdstext.encode())
+            rdsconn.close()
+        else:
+            return False
+        
+        return True
+
+    # function to infinitely run rds updates
+    def runUpdater(self):
+        c_title     = ""
+        c_artist    = ""
+        c_album     = ""
+
+        while 1:
+            new_song = self._fetchSong()
+
+            if new_song['title'] != c_title or new_song['artist'] != c_artist:
+                c_title     = new_song['title']
+                c_artist    = new_song['artist']
+                c_album     = new_song['album']
+
+                self._update(c_title, c_artist)
+
+            sleep(self.interval)
+
+        return True
+
 
 # main function, just calls the rds updater method
 if __name__ == "__main__":
-  updateRDS()
+    # fetch info from the config file
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "", ["config="])
+
+    except (Exception, getopt.GetoptError):
+        print("Specify a config file with --config=<file name>")
+        sys.exit(1)
+
+    if len(opts) < 1:
+        print("Specify a file with --config=<file name>")
+        sys.exit(1)
+
+    config_file = None
+
+    for o, a in opts:
+        if o == "--config":
+            config_file = a
+
+    config = configparser.ConfigParser()
+    config.read(config_file)
+    pid_path = config['GENERAL']['pid_path']
+
+    # write out a pid file
+    # note that this will overwrite an existing pid file
+    try:
+        pid_file = open(pid_path, 'w')
+        pid_file.write(str(os.getpid()) + "\n")
+        pid_file.close()
+        
+    except (Exception, IOError) as e:
+        print("IO Error => ", e)
+
+    # update rds
+    rds = RDSUpdater(config)
+    rds.runUpdater()
+
+    sys.exit(0)
