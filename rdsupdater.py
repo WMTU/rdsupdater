@@ -33,8 +33,7 @@ class RDSUpdater:
             url = self.log_url + '?' + urllib.parse.urlencode(self.log_args)
             request = urllib.request.Request(url, headers={'User-Agent': 'RDS-Updater'})
             data = urllib.request.urlopen(request).read()
-            encoding = data.info().get_content_charset('utf-8')
-            data = json.loads(data.decode(encoding))
+            data = json.loads(data.decode('utf-8'))
             
         except (Exception, urllib.error.HTTPError) as e:
             print("HTTP Error => ", e)
