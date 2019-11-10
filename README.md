@@ -16,6 +16,11 @@ Python 3 script for periodically updating a RDS injector over serial.
 
 ## Changelog
 
+November 10, 2019
+
+* Fixed a bug where the pid_file was not being declared
+* Fixed an issue with the http request for the song log json data
+
 October 11, 2019
 
 * Rewrite for use as a daemon process

@@ -10,9 +10,10 @@ class RDSUpdater:
     def __init__(self, config):
         # configuration
         self.interval   = int(config['GENERAL']['update_interval'])
-        self.device     = config['GENERAL']['serial_device']
         self.log_url    = config['GENERAL']['log_url']
         self.log_args   = ast.literal_eval(config['GENERAL']['log_args'])
+        self.device     = config['GENERAL']['serial_device']
+        self.pid_path   = config['GENERAL']['pid_path']
 
         # write out a pid file
         # note that this will overwrite an existing pid file
@@ -22,7 +23,8 @@ class RDSUpdater:
             pid_file.close()
         
         except (Exception, IOError) as e:
-            print("IO Error => ", e)
+            print("IO Error with pid file => ", e)
+            exit(1)
 
     # function to fetch the current song data
     def _fetchSong(self):
@@ -31,7 +33,8 @@ class RDSUpdater:
             url = self.log_url + '?' + urllib.parse.urlencode(self.log_args)
             request = urllib.request.Request(url, headers={'User-Agent': 'RDS-Updater'})
             data = urllib.request.urlopen(request).read()
-            data = json.loads(data)
+            encoding = data.info().get_content_charset('utf-8')
+            data = json.loads(data.decode(encoding))
             
         except (Exception, urllib.error.HTTPError) as e:
             print("HTTP Error => ", e)
