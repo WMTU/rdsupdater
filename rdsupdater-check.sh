@@ -20,7 +20,7 @@ if [ ! -e $pid_path ]; then
     runCmd
 else
     PID=`cat $pid_path`
-    if [ ! ps -p $PID > /dev/null ]; then
+    if ! ps -p $PID > /dev/null; then
         rm $pid_path
         runCmd
     fi
