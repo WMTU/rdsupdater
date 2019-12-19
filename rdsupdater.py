@@ -7,24 +7,12 @@ from time import sleep
 import serial
 
 class RDSUpdater:
-    def __init__(self, config):
+    def __init__(self, interval, log_url, log_args, serial_dev):
         # configuration
-        self.interval   = int(config['GENERAL']['update_interval'])
-        self.log_url    = config['GENERAL']['log_url']
-        self.log_args   = ast.literal_eval(config['GENERAL']['log_args'])
-        self.device     = config['GENERAL']['serial_device']
-        self.pid_path   = config['GENERAL']['pid_path']
-
-        # write out a pid file
-        # note that this will overwrite an existing pid file
-        try:
-            pid_file = open(self.pid_path, 'w')
-            pid_file.write(str(os.getpid()) + "\n")
-            pid_file.close()
-        
-        except (Exception, IOError) as e:
-            print("IO Error with pid file => ", e)
-            exit(1)
+        self.interval   = interval
+        self.log_url    = log_url
+        self.log_args   = log_args
+        self.device     = serial_dev
 
     # function to fetch the current song data
     def _fetchSong(self):
@@ -121,7 +109,12 @@ if __name__ == "__main__":
         print("IO Error => ", e)
 
     # update rds
-    rds = RDSUpdater(config)
+    rds = RDSUpdater(
+        int(config['GENERAL']['update_interval']),
+        config['GENERAL']['log_url'],
+        ast.literal_eval(config['GENERAL']['log_args']),
+        config['GENERAL']['serial_device'])
+
     rds.runUpdater()
 
     sys.exit(0)
