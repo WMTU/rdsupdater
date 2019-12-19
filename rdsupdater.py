@@ -29,9 +29,9 @@ class RDSUpdater:
             print("URL Error => ", e)
 
         # set current song
-        c_title     = data['songs'][0]['title']
-        c_artist    = data['songs'][0]['artist']
-        c_album     = data['songs'][0]['album']
+        c_title     = data[0]['song']
+        c_artist    = data[0]['artist']
+        c_album     = data[0]['album']
 
         return { 'title': c_title, 'artist': c_artist, 'album': c_album }
 

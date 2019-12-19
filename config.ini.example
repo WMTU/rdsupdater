@@ -2,8 +2,8 @@
 # interval in seconds to check for updates
 update_interval = 10
 # log api info
-log_url         = https://wmtu.fm/log/api/v1.0/songs
-log_args        = { 'n': '1', 'desc': 'true', 'delay': 'true' }
+log_url         = https://log.wmtu.fm/api/2.0/log
+log_args        = { 'n': '1', 'delay': 'true' }
 # serial device to send data on
 serial_device   = /dev/ttyS0
 # path for the pid file
