@@ -7,12 +7,12 @@ from time import sleep
 import serial
 
 class RDSUpdater:
-    def __init__(self, interval, log_url, log_args, serial_dev):
+    def __init__(self, check_int, url, args, device):
         # configuration
-        self.interval   = interval
-        self.log_url    = log_url
-        self.log_args   = log_args
-        self.device     = serial_dev
+        self.interval   = check_int
+        self.log_url    = url
+        self.log_args   = args
+        self.device     = device
 
     # function to fetch the current song data
     def _fetchSong(self):
@@ -22,18 +22,18 @@ class RDSUpdater:
             request = urllib.request.Request(url, headers={'User-Agent': 'RDS-Updater'})
             data = urllib.request.urlopen(request).read()
             data = json.loads(data.decode('utf-8'))
+
+            # set current song
+            c_title     = data[0]['song']
+            c_artist    = data[0]['artist']
+            c_album     = data[0]['album']
+
+            return { 'title': c_title, 'artist': c_artist, 'album': c_album }
             
         except (Exception, urllib.error.HTTPError) as e:
             print("HTTP Error => ", e)
         except (Exception, urllib.error.URLError) as e:
             print("URL Error => ", e)
-
-        # set current song
-        c_title     = data[0]['song']
-        c_artist    = data[0]['artist']
-        c_album     = data[0]['album']
-
-        return { 'title': c_title, 'artist': c_artist, 'album': c_album }
 
     # function to push an update to the RDS units
     def _update(self, title, artist):
