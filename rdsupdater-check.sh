@@ -4,7 +4,7 @@
 program_name="rdsupdater"
 program_bin="/opt/rdsupdater/rdsupdater.py"
 program_config="/opt/rdsupdater/config.ini"
-debug_log="/opt/rdsupdater/debug.log"
+debug_log="/opt/rdsupdater/logs/debug.log"
 pid_path="/opt/rdsupdater/rdsupdater.pid"
 
 # function to call the command to launch the program
